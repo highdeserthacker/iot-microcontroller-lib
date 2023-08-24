@@ -1,4 +1,5 @@
 # Individual Files to ignore - e.g. Logs
+LICENSE.*
 *.log
 *.code-workspace
 *.csv

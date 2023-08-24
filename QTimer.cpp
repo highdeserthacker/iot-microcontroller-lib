@@ -80,9 +80,17 @@ int                        QTimestamp::_RolledOver= -2;
 
 } // Difference
 /**************************************************************************************/
+/*static*/ uint32_t QTimestamp::GetAgeSec(TimestampType Timestamp)
+{
+   uint32_t NowMsec= QTimestamp::GetNowTimeMsec();
+   uint32_t Result= (NowMsec - Timestamp) / 1000;
+   return Result;
+
+} // GetAgeSec
+/**************************************************************************************/
 /*static*/ float QTimestamp::GetUptimeDays()
 {
-   float UptimeDays= _RolloverCnt *  (((float) _MaxTimestampMsec) / (float) _MsecPerDay);
+   float UptimeDays= _RolloverCnt * (((float) _MaxTimestampMsec) / (float) _MsecPerDay);
    UptimeDays+= ((float) GetNowTimeMsec()) / (float) _MsecPerDay;
    return UptimeDays;
 

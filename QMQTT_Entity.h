@@ -44,9 +44,24 @@ class QMQTT_Entity
       IOT_Count
    };
 
+   typedef int16_t         EntityStateT;
+
    ///////////////////////////////////////////////////////////
    // Data
    ///////////////////////////////////////////////////////////
+   public:
+   /* Terms used in json payloads.  */
+   static constexpr char * _pSetSubTopic=       "cmd";
+   static constexpr char * _pAnnounceSubTopic=  "config";
+   static constexpr char * _pAvailabilitySubTopic= "status";
+
+   static constexpr char * _pStateCommand=      "state";
+   static constexpr char * _pStateOn=           "on";
+   static constexpr char * _pStateOff=          "off";
+
+   static constexpr char * _pAvailability_Online= "online";
+
+
    protected:
    /* Static Data          */
    static int              _EntityCount;
@@ -85,17 +100,6 @@ class QMQTT_Entity
    static char             _pJsonPayloadStr[MAX_JSON_PAYLOAD_STR+1];
 
 
-   /* Terms used in json payloads.  */
-   static constexpr char * _pSetSubTopic=       "cmd";
-   static constexpr char * _pAnnounceSubTopic=  "config";
-   static constexpr char * _pAvailabilitySubTopic= "status";
-
-   static constexpr char * _pStateCommand=      "state";
-   static constexpr char * _pStateOn=           "on";
-   static constexpr char * _pStateOff=          "off";
-
-   static constexpr char * _pAvailability_Online= "online";
-
    static const int        _MaxOnTimeSecDflt=   /*hrs*/6 * /*min*/60 * /*sec*/60;
 
    static QShiftRegister * _pShiftRegister;
@@ -109,19 +113,23 @@ class QMQTT_Entity
    uint8_t                 _Id;
    
    //////// IO Configuration
-   /* Common state info shared by binary devices (switches, sensors).
-      TBD: Consider placing in a QIO_Device Class  */
+   /* Common state info shared by binary devices (switches, sensors).   */
    EIOT                    _IOType;
+
    /* (optional) Address for IO. This may be:
       - Bit position for the I/O controlled by this entity. 0..N-1. 
       - GPIO address, e.g. (D0) 
       - I2C address.                                  */
    int                     _Address;
+
+   /* Applicable to binary devices (switches, binary sensors). */
    bool                    _ActiveLow;
 
-   /* State of entity. Contains the logical value, i.e. does not account for any ActiveLow setting,
-      which is a function of the underlying device. */
-   uint8_t                 _State;
+   /* State of entity. Defined as Int16 to support a range of sensor types, including
+      binary (on/off).
+      Contains the logical value, i.e. does not account for any ActiveLow setting,
+      which is a function of the underlying device.      */
+   EntityStateT            _State;
 
    //////// Topic Configuration
    /* Entity subtopic. This is essentially the name of the entity as seen
@@ -216,7 +224,9 @@ class QMQTT_Entity
    /* Report state helpers that can be used by entities for common needs. */
    void                    ReportStateOnOff(bool State);
    void                    ReportStateOnOff(){ReportStateOnOff(_State);};
-   void                    ReportJsonStr(char * pText);      // json payload
+
+   public:
+   void                    ReportJsonStr(char * pJsonText);  
 
 }; // QMQTT_Entity
 
@@ -268,19 +278,32 @@ class QMQTT_Entity_Switch : public QMQTT_Entity
    This is a virtual class, must be subclassed in order to specify ReadSensor().
 
    Additional functionality for:
-      - periodically reading the sensor value via virtual ReadSensor()
+      - periodically reading the sensor value via virtual ReadSensor().
+      - an optional reporting callback can be assigned for custom payloads.
 
-   TBD: support for optional callback to parent to obtain sensor value. This would allow
-        handling any sensor type and data manipulation.
-         - ability to set min/max limits on reporting for erroneous sensor readings
 */   
 /**************************************************************************************/
 class QMQTT_Entity_Sensor : public QMQTT_Entity
 {
    ///////////////////////////////////////////////////////////
+   // Callback Signatures
+   ///////////////////////////////////////////////////////////
+   public:
+   /* Signature for optional callback to read sensor. 
+      pointer to a function that has input int and returns an int.       */
+   typedef int (* ReadSensorCallback)(int Id, bool State);
+
+   /* Signature for optional callback for reporting sensor value. Allows override of
+      the default reporting method.    */
+   typedef void (* ReportSensorCallback)(int Id, bool State);
+
+   ///////////////////////////////////////////////////////////
    // Data
    ///////////////////////////////////////////////////////////
    protected:
+   ReadSensorCallback      _pReadSensorCallback;
+   ReportSensorCallback    _pReportSensorCallback;
+
 
    ///////////////////////////////////////////////////////////
    // Methods
@@ -288,6 +311,9 @@ class QMQTT_Entity_Sensor : public QMQTT_Entity
    public:
                            QMQTT_Entity_Sensor(const char * pSubTopicEntity);
                            QMQTT_Entity_Sensor(const char * pSubTopicEntity, EIOT IOType, int Address, bool ActiveLow);
+
+   void                    SetReadSensorCallback(ReadSensorCallback pReadSensorCallback);
+   void                    SetReportSensorCallback(ReportSensorCallback pReportSensorCallback);
 
    protected:
    void                    Init();
@@ -298,8 +324,14 @@ class QMQTT_Entity_Sensor : public QMQTT_Entity
    /* Read the sensor state/value and report to mqtt. */
    virtual void            ReadSensor()= 0;
 
+   /* Helper for child classes post read of sensor to handle optional callback,
+      detection of state change and consequent immediate reporting. */
+   void                    ReadSensorHandler(EntityStateT SensorState);
+
+
    /* Default reporting method that can be used by subclasses. Assumes entity is binary sensor
-      reporting as on|off. */
+      and reports _State as on|off.
+      If ReportSensorCallback is specified, this is used instead. */
    virtual void            Report();
 
 }; // QMQTT_Entity_Sensor
@@ -338,25 +370,11 @@ class QMQTT_Entity_Temperature_Sensor : public QMQTT_Entity_Sensor
 /**************************************************************************************/
 class QMQTT_Entity_Binary_Sensor : public QMQTT_Entity_Sensor
 {
-   public:
-   /* Signature for optional callback to read sensor. 
-      pointer to a function that has input int and returns an int.       */
-   typedef bool (* ReadSensorCallback)(int Id, bool State);
-
-   ///////////////////////////////////////////////////////////
-   // Data
-   ///////////////////////////////////////////////////////////
-   protected:
-   ReadSensorCallback      _pReadSensorCallback;
-
-
    ///////////////////////////////////////////////////////////
    // Methods
    ///////////////////////////////////////////////////////////
    public:
                            QMQTT_Entity_Binary_Sensor(const char * pSubTopicEntity, EIOT IOType, int Address, bool ActiveLow);
-
-   void                    SetReadSensorCallback(ReadSensorCallback pReadSensorCallback);
 
    protected:
    void                    Init();

@@ -19,10 +19,13 @@ class QTimestamp
    ///////////////////////////////////////////////////////////
    // Data
    ///////////////////////////////////////////////////////////
+   public:
+   typedef uint32_t        TimestampType;
+
    protected:
-   static const uint32_t   _MaxTimestampMsec= 0xFFFFFFFFUL;
-   static const uint32_t   _MsecPerDay= /*hrs*/24 * /*min*/60 */*sec*/60 * /*msec*/1000;
-   static uint32_t         _PrevTimestamp;
+   static const TimestampType _MaxTimestampMsec= 0xFFFFFFFFUL;
+   static const TimestampType _MsecPerDay= /*hrs*/24 * /*min*/60 */*sec*/60 * /*msec*/1000;
+   static TimestampType       _PrevTimestamp;
    static int              _RolloverCnt;
 
    ///////////////////////////////////////////////////////////
@@ -31,7 +34,7 @@ class QTimestamp
 
    public:
    /* Gets the current timestamp. For ESP8266, this is based on millis(). */
-   static uint32_t         GetNowTimeMsec();
+   static TimestampType    GetNowTimeMsec();
 
    /* Compares the Timestamp to the Reference time. Values are integer times in any units of interest
       e.g. millis() readings. Handles rollover of timestamps.
@@ -41,7 +44,12 @@ class QTimestamp
    */
    static int              Compare(uint32_t Timestamp, uint32_t Reference);
 
-   static uint32_t         Difference(uint32_t Timestamp, uint32_t Reference);
+   static TimestampType    Difference(uint32_t Timestamp, uint32_t Reference);
+
+   /* Age of timestamp in seconds, relative to Now. */
+   static uint32_t         GetAgeSec(TimestampType Timestamp);
+
+   /* Time in days since reboot. */
    static float            GetUptimeDays();
 
    #ifdef _DEBUG_QTIMESTAMP

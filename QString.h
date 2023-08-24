@@ -7,6 +7,8 @@
 
 #include "AllApps.h"
 
+const char * GetTrueFalseStr(bool Flag);
+
 int FindCh(const char * pStr, char ch);
 
 void ToStr(const uint16_t * pArr, int nItems, char * pStr, int Size);

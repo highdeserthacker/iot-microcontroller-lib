@@ -80,7 +80,6 @@ void QTime::CheckInitialized()
    // TBD - GET A NEW _pNTPClient every few days to ensure THAT PULLING A NEW ONE FROM NTP POOL.
    if (!_NTPInitialized)
    {
-      //if (   QWifi::Master()->IsConnected()          || (_pWaitTimer->IsDone()) )
       if (QWifi::Master()->IsConnected())
       {  // Wifi connection is ok
          /* Starts the udp listener socket. */

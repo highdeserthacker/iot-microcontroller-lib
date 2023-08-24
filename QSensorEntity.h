@@ -48,7 +48,7 @@ class QSensorEntity
    // Methods
    ///////////////////////////////////////////////////////////
    public:
-                           QSensorEntity(const char * pName, SensorEntityType SensorType);
+                           QSensorEntity(const char * pName, SensorEntityType SensorType, int StaleTimeSec);
    void                    Set(float Value);
    float                   Get();
    bool                    IsStale();
@@ -60,16 +60,9 @@ class QSensorEntity
    #endif
    
    protected:
-   void                    Init();
+   void                    Init(int StaleTimeSec);
    
 };
-
-
-/**************************************************************************************/
-/* QMQTT_SubscriberEntity - Subscribes to an mqtt topic and captures the specified
-   sensor data. 
-*/   
-/**************************************************************************************/
 
 
 #endif

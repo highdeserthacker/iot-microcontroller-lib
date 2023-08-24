@@ -19,7 +19,6 @@ template<typename T> QBfr<T>::QBfr(int Size)
    {
       _Bfr[i]= 0;
    }
-
    
 } // QBfr
 /**************************************************************************************/
@@ -50,10 +49,8 @@ template<typename T> void QBfr<T>::Set(T Element)
 
 } // Set
 /**************************************************************************************/
-template<typename T> void QBfr<T>::Put(T Element)
+template<typename T> void QBfr<T>::Next()
 {
-   _Bfr[_Index]= Element;
-   //_Index= (_Index == _Size-1)?(0):(_Index+1);
    if (_Index == (_Size-1))
    {
       _Wraparound= true;
@@ -62,14 +59,22 @@ template<typename T> void QBfr<T>::Put(T Element)
    else
       _Index++;
 
+   Set(0);                                            // Initialize head
+
+} // Next
+/**************************************************************************************/
+template<typename T> void QBfr<T>::Put(T Element)
+{
+   Set (Element);
+   Next();
+
 } // Put
 /**************************************************************************************/
 template<typename T> T QBfr<T>::Get(int LookbackOffset)
 {
-   //int i= (_Index == 0)?(_Size - 1):(_Index - 1);
    ASSERT(LookbackOffset < _Size);
    LookbackOffset= _min(LookbackOffset, _Size-1);
-   int i= _Index - 1 - LookbackOffset;
+   int i= _Index - LookbackOffset;
    if (i < 0)
       i+= _Size;
 
@@ -77,7 +82,6 @@ template<typename T> T QBfr<T>::Get(int LookbackOffset)
    return Result;
 
 } // Get
-
 
 /**************************************************************************************/
 /* Explicit instantiation of all the supported types. Must be done here, after the 
@@ -88,6 +92,8 @@ template class QBfr<float>;
 template class QBfr<uint8_t>;
 template class QBfr<uint16_t>;
 template class QBfr<uint32_t>;
+
+
 
 /**************************************************************************************/
 // QQueue

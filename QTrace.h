@@ -13,8 +13,6 @@
 
 
 /**************************************************************************************/
-#define TRACE_MAX_STRING      511
-
 enum TraceLevelType
 {
    TLT_Off=       0,
@@ -81,6 +79,8 @@ class QTrace
    static const uint32_t   _TraceSwitchesLevel_Warning=  0x33333333;
    static const uint32_t   _TraceSwitchesLevel_Verbose=  0x55555555;
    static const uint32_t   _TraceSwitchesLevel_Max=      0x77777777;
+
+   static const int        _TraceBfrSize=    511;
    
    ///////////////////////////////////////////////////////////
    protected:

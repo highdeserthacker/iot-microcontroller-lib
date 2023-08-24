@@ -172,14 +172,15 @@ QMQTT_Entity::QMQTT_Entity(const char * pSubTopicEntity, EIOT IOType, int Addres
 {
    Init(IOType, Address, ActiveLow, pSubTopicEntity);
    _Trace.printf(TS_SERVICES, TLT_Verbose, "QMQTT_Entity(): Created entity %d, type:%d, Addr:%d, topic:[%s]", 
-      _EntityCount, _IOType, _Address, _pSubTopicEntity);
+      _EntityCount-1, _IOType, _Address, _pSubTopicEntity);
 
 } // QMQTT_Entity
 /**************************************************************************************/
 QMQTT_Entity::QMQTT_Entity(const char * pSubTopicEntity)
 {
    Init(EIOT::IOT_SHIFT_REGISTER, /*Address*/-1, /*ActiveLow*/false, pSubTopicEntity);
-   _Trace.printf(TS_SERVICES, TLT_Verbose, "QMQTT_Entity(): Created instance %d, topic:[%s]", _EntityCount, _pSubTopicEntity);
+   _Trace.printf(TS_SERVICES, TLT_Verbose, "QMQTT_Entity(): Created entity %d, topic:[%s]",
+      _EntityCount-1, _pSubTopicEntity);
 
 } // QMQTT_Entity
 /**************************************************************************************/
@@ -230,13 +231,13 @@ void QMQTT_Entity::Enable(bool Flag)
    Used by sensors, e.g. to publish sensor reading.
    Inputs:  pText    payload- json string.
 */
-void QMQTT_Entity::ReportJsonStr(char * pText)
+void QMQTT_Entity::ReportJsonStr(char * pJsonText)
 {
    /* Generate the topic path for state publishing. Of the form EntityPath/ThisEntityName */
    char pStateTopic[MQTT_TOPIC_LEN+1];
    sprintf(pStateTopic, "%s/%s", _pEntitiesTopic, _pSubTopicEntity);
 
-   bool Result= QMQTT_Entity::_pMQTT->Publish(/*Topic*/pStateTopic, /*Payload*/pText);
+   bool Result= QMQTT_Entity::_pMQTT->Publish(/*Topic*/pStateTopic, /*Payload*/pJsonText);
 
 } // ReportJsonStr
 /**************************************************************************************/
@@ -478,7 +479,33 @@ QMQTT_Entity_Sensor::QMQTT_Entity_Sensor(const char * pSubTopicEntity, EIOT IOTy
 /**************************************************************************************/
 void QMQTT_Entity_Sensor::Init()
 {
+   _pReadSensorCallback=   NULL;
+   _pReportSensorCallback= NULL;
 } // Init
+/**************************************************************************************/
+void QMQTT_Entity_Sensor::SetReadSensorCallback(ReadSensorCallback pReadSensorCallback)
+{
+   _pReadSensorCallback= pReadSensorCallback;
+} // SetReadSensorCallback
+/**************************************************************************************/
+void QMQTT_Entity_Sensor::SetReportSensorCallback(ReportSensorCallback pReportSensorCallback)
+{
+   _pReportSensorCallback= pReportSensorCallback;
+} // SetReportSensorCallback
+/**************************************************************************************/
+void QMQTT_Entity_Sensor::ReadSensorHandler(EntityStateT SensorState)
+{
+   /* Optional callback here to process the result. e.g. filter, debounce, average, etc. */
+   if (_pReadSensorCallback != NULL)
+      SensorState= this->_pReadSensorCallback(_Id, SensorState); 
+
+   /* Check for change in state, in which case we report immediately. */
+   bool StateChange= (SensorState != _State);
+   _State= SensorState;
+   if (StateChange)
+      Report();
+
+} // ReadSensorHandler
 /**************************************************************************************/
 void QMQTT_Entity_Sensor::CheckEntity()
 {
@@ -492,7 +519,9 @@ void QMQTT_Entity_Sensor::CheckEntity()
    if (_pStateReportingTimer->IsDone())
    {  // Time to report state
       if (_pStateCheckTimer == NULL)
+      {  /* No separate timer for state checking, read sensor and immediately report. */
          ReadSensor();
+      }
 
       Report();
    }
@@ -506,8 +535,14 @@ void QMQTT_Entity_Sensor::DoCommand(char * pMessage)
 /**************************************************************************************/
 /*virtual*/ void QMQTT_Entity_Sensor::Report()
 {
-   ReportStateOnOff();                               
+   /* Optional callback here to issue custom report payload. */
+   if (_pReportSensorCallback != NULL)
+      this->_pReportSensorCallback(_Id, _State); 
+   else
+      ReportStateOnOff();                               
+
    _pStateReportingTimer->Restart();
+
 } // Report
 
 /**************************************************************************************/
@@ -560,23 +595,18 @@ QMQTT_Entity_Binary_Sensor::QMQTT_Entity_Binary_Sensor(const char * pSubTopicEnt
 /**************************************************************************************/
 void QMQTT_Entity_Binary_Sensor::Init()
 {
-   _pReadSensorCallback= NULL;
    _pStateCheckTimer= new QTimer(_StateCheckSec */*msec*/1000, /*Repeat*/true, /*Start*/false, /*Done*/true);
 } // Init
-/**************************************************************************************/
-void QMQTT_Entity_Binary_Sensor::SetReadSensorCallback(ReadSensorCallback pReadSensorCallback)
-{
-   _pReadSensorCallback= pReadSensorCallback;
-} // SetReadSensorCallback
 /**************************************************************************************/
 void QMQTT_Entity_Binary_Sensor::ReadSensor()
 /* 
 */
 {
-   bool State= digitalRead(_Address);                 // HIGH / 1 / true
+   EntityStateT State= digitalRead(_Address);         // HIGH / 1 / true
    if (_ActiveLow)
-      State= !State;
+      State= (State == 0)?(1):(0);
 
+   #ifdef OLDSTUFF
    /* Optional callback here to process the result. e.g. LPF, debounce.
       Overrides read of state above.            */
    if (_pReadSensorCallback != NULL)
@@ -587,6 +617,10 @@ void QMQTT_Entity_Binary_Sensor::ReadSensor()
    _State= State;
    if (StateChange)
       Report();
+
+   #endif
+
+   ReadSensorHandler(State);
 
 } // ReadSensor
 

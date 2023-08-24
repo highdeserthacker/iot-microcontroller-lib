@@ -28,7 +28,7 @@ class QMath
    // Methods
    ///////////////////////////////////////////////////////////
    public:
-   static bool                  IsBitSet(uint16_t Target, uint16_t Mask)
+   static bool              IsBitSet(uint16_t Target, uint16_t Mask)
     {
       if ((Target & Mask) != 0)
           return true;
@@ -36,17 +36,17 @@ class QMath
           return false;
     };
 
-  /*  Sets all the bits specified in the mask.    */
-   static uint16_t           SetBits(uint16_t Val, uint16_t Mask)
-    {   // Hack to allow Or'g of enums without the compiler bitching
-      Val|= Mask;
+  /*  Resets all the bits specified in the mask. */
+   static uint16_t           ResetBits(uint16_t Val, uint16_t Mask)
+    { 
+      Val&= ~Mask;
       return Val;
     };
 
-  /*  Resets all the bits specified in the mask. */
-   static uint16_t           ResetBits(uint16_t Val, uint16_t Mask)
-    {   // Hack to allow And'g of enums without the compiler bitching
-      Val&= ~Mask;
+  /*  Sets all the bits specified in the mask.    */
+   static uint16_t           SetBits(uint16_t Val, uint16_t Mask)
+    { 
+      Val|= Mask;
       return Val;
     };
 
@@ -57,7 +57,7 @@ class QMath
     }
 
    /* Sets the state for a single bit. */
-   static uint16_t              SetBitState(uint16_t Word, int8_t Position, int8_t BitValue)
+   static uint16_t            SetBitState(uint16_t Word, int8_t Position, int8_t BitValue)
    {
       uint16_t NewWord= ResetBits(Word, 1 << Position);
       if (BitValue == 1)

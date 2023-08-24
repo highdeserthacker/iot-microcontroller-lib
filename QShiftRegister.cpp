@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// :mode=c:
 /*  QShiftRegister.cpp  */
 ///////////////////////////////////////////////////////////////////////////////
 #include "QShiftRegister.h"
@@ -7,7 +6,6 @@
 
 /**************************************************************************************/
 // QShiftRegister
-/**************************************************************************************/
 /**************************************************************************************/
 /* Sets the size of the shift register.
    Note that pins are not assigned yet, so register is not initialized. */
@@ -74,14 +72,10 @@ void QShiftRegister::Write()
 
    /* Shift data in serially, in byte groups.
       Serial output of highest byte to lowest byte, msb first. */
-   /* ZZZ - SOMEHOW BIT SETTINGS AREN'T TAKING, BUT OTHERS REMAIN OK. */
    for (int i= nBytes - 1 ; i >= 0 ; i--)
    {
       int ShiftCnt= i * 8;
       uint8_t byt= (_Data >> ShiftCnt) & 0xFF;
-      /* ZZZ- SHOULD I WRITE MY OWN SHIFT?
-         */
-      // https://www.arduino.cc/reference/en/language/functions/advanced-io/shiftout/
       shiftOut(_DataPin, _ClkPin, MSBFIRST, byt);     // Shift a byte's worth
    }
 

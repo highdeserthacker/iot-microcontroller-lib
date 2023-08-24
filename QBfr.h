@@ -12,11 +12,10 @@
 
 /**************************************************************************************/
 /* QBfr - a wrap-around buffer. Used to keep the last Size data elements, e.g. for
-   measurement recording. It only has the concept of a head (no tail). Elements are 
-   added to the tail, and it can wrap around. Examining the contents is a lookback 
-   relative to the head (most recent).
-   Once it wraps around, count is always equal to Size.
-*/   
+   measurement recording. It only has the concept of a head (no tail, hence no overrun).
+   Elements are added to the tail, and it can wrap around. 
+   Examining the contents is a lookback relative to the head (most recent).
+   Once it wraps around, count is always equal to Size.        */   
 /**************************************************************************************/
 template <class T> class QBfr
 {
@@ -25,6 +24,8 @@ template <class T> class QBfr
    ///////////////////////////////////////////////////////////
    protected:
    int                     _Size;
+
+   /* Only used for Count(). */
    bool                    _Wraparound;
 
    /* Points to the next available location. */
@@ -42,13 +43,16 @@ template <class T> class QBfr
 
    /* Set the value at head of buffer. */
    void                    Set(T Element);
-   /* Set the value at head of buffer and move to next location. */
+
+   void                    Next();
+
+   /* Set the value at head of buffer and move head to the next location.
+      Initializes the head location to zero. */
    void                    Put(T Element);
 
    /* Get the value at the offset relative to the head of the buffer. 
       0: head, 1: head-1, etc.                                    */
    T                       Get(int LookbackOffset);
-
    
    protected:
    void                    Init();

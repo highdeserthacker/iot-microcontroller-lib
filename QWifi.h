@@ -69,8 +69,7 @@ class QWifi
       Cumulative. */         
    unsigned long           _ConnectionAttemptTimeouts;       
 
-   /* _ConnectionLostTimeMsec - the time connection was lost. 0 if ok. 
-      tbd- parent to utilize this to determine whether to reboot.       */
+   /* _ConnectionLostTimeMsec - the time connection was lost. 0 if ok.     */
    unsigned long           _ConnectionLostTimeMsec;
 
 

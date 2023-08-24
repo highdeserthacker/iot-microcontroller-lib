@@ -14,21 +14,20 @@ char                       QSensorEntity::_TraceBfr[_DumpBfrLen+1];
 #endif
 
 /**************************************************************************************/
-QSensorEntity::QSensorEntity(const char * pName, SensorEntityType SensorType)
+QSensorEntity::QSensorEntity(const char * pName, SensorEntityType SensorType, int StaleTimeSec)
 {
-   Init();
+   Init(StaleTimeSec);
    _pName= pName;
    _SensorType= SensorType;
    
 } // QSensorEntity
 /**************************************************************************************/
-void QSensorEntity::Init()
+void QSensorEntity::Init(int StaleTimeSec)
 {
    _SensorType= SensorEntityType::ST_None;
    _ValueFloat= 0;
-   _StaleTimeSec= 5 * 60;
+   _StaleTimeSec= StaleTimeSec;
    _pStaleTimer= new QTimer(/*sec*/_StaleTimeSec * /*msec*/1000,/*Repeat*/false,/*Start*/false,/*Done*/true);
-   //_pStaleTimer->Enable();    // Timer is in the Done state.
 
 } // Init
 #ifdef _DEBUG_QSENSORENTITY

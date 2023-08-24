@@ -260,8 +260,15 @@ bool QMQTT::Publish(const char * pTopic, const char * pPayload, bool RetainMsg)
    bool Result= false;
 
    if (pTopic != NULL)
-      Result= publish(pTopic, pPayload, RetainMsg);   // returns false on fail (e.g. payload too big)
-
+   {
+      /* The payload limit does not seem to be enforced properly.
+         In PubSubClient CHECK_STRING_LENGTH it is capped to  - 
+         topic length + payload length + 2 <= MQTT_MAX_PACKET_SIZE
+         But it fails without returning false for topic+payload strlen within 4 bytes of MQTT_MAX_PACKET_SIZE.
+      */
+      if ((strlen(pTopic) + 1 + strlen(pPayload) + 1 + 4) < MQTT_MAX_PACKET_SIZE)
+         Result= publish(pTopic, pPayload, RetainMsg);   // returns false on fail (e.g. payload too big)
+   }
    return Result;
    
 } // Publish

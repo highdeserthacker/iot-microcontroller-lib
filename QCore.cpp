@@ -83,8 +83,6 @@ QCore::QCore(const char * pDeviceIdentifier, ServiceSettingT Services)
 
    Init();
 
-   // TBD - READ APP SETTINGS
-
    /* MQTT setup - server, publish and subscribe topics. */
    new QMQTT(_MQTT_Address, pDeviceIdentifier);       // Creates the Master object
 

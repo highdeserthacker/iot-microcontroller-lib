@@ -5,6 +5,14 @@
 #include <Arduino.h>
 
 /**************************************************************************************/
+const char * GetTrueFalseStr(bool Flag)
+{
+   static const char * pTrue= "true";
+   static const char * pFalse= "false";
+   return (Flag)?(pTrue):(pFalse);
+
+} // GetTrueFalseStr
+/**************************************************************************************/
 int FindCh(const char * pStr, char ch)
 {
    int Result= -1;
@@ -68,7 +76,7 @@ void ToHexStr(const unsigned char * Bytes, int nBytes, char * Str)
 } // ToHexStr
 /**************************************************************************************/
 void FloatToStr(float f, char * pStr, int Precision)
-/* Workaround for the horrid Arduino non-support an aberrant behavior with sprintf() on
+/* Workaround for the horrid Arduino non-support and aberrant behavior with sprintf() on
    floats. sprintf() has bizarre problems with %f, supposed to show '?', which it does
    not, and it will even blow away the buffer such that it never prints anything.  */
 {

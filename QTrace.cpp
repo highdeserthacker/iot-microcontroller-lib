@@ -1,21 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-// :mode=c:
-/*  QTrace.cpp - 
-*/
+/*  QTrace.cpp       */
 ///////////////////////////////////////////////////////////////////////////////
-/*
-_____________________________________________________________________
-Revision History
-  
-   03/13/16 Created library.
-
-_____________________________________________________________________
-TBD:
-   - storing debug strings in progmem: https://www.arduino.cc/reference/tr/language/variables/utilities/progmem/
-   - set the trace level
-   - alt dest: syslog, pi
-
-*/
 #ifdef ASSERT
 #error "ASSERT is already defined." 
 #endif
@@ -134,8 +119,8 @@ void QTrace::printf(uint8_t TraceSwitchId, TraceLevelType TraceLevel, char pStr[
             TraceLevel
             Str
 */
-{
-   char PrnBfr[TRACE_MAX_STRING+1];
+{ 
+   char PrnBfr[_TraceBfrSize];
    /* Get the trace threshold for this switch. */
    //int Switch= (_TraceSwitches >> (TraceSwitchId*4)) & 0x0F;
    int Switch= GetTraceSwitch(TraceSwitchId);
@@ -146,7 +131,8 @@ void QTrace::printf(uint8_t TraceSwitchId, TraceLevelType TraceLevel, char pStr[
    {
       va_list arg_list;
       va_start(arg_list, pStr);
-      vsprintf(PrnBfr, pStr, arg_list);
+      //vsprintf(PrnBfr, pStr, arg_list);
+      vsnprintf(PrnBfr, sizeof(PrnBfr), pStr, arg_list);
       va_end (arg_list);
    
       PrintIt(PrnBfr);
@@ -155,12 +141,12 @@ void QTrace::printf(uint8_t TraceSwitchId, TraceLevelType TraceLevel, char pStr[
 } // printf
 /**************************************************************************************/
 void QTrace::printf(TraceLevelType TraceLevel, char pStr[], ...)
-/*
+/* Output to default trace switch.
    Inputs:  TraceLevel
             Str
 */
 {
-   char PrnBfr[TRACE_MAX_STRING+1];
+   char PrnBfr[_TraceBfrSize];
    /* Get the trace threshold for this switch. */
    //int Switch= (_TraceSwitches >> (TraceSwitchId*4)) & 0x0F;
    int Switch= GetTraceSwitch(/*TraceSwitchId*/ TS_DFLT);
@@ -171,7 +157,8 @@ void QTrace::printf(TraceLevelType TraceLevel, char pStr[], ...)
    {
       va_list arg_list;
       va_start(arg_list, pStr);
-      vsprintf(PrnBfr, pStr, arg_list);
+      //vsprintf(PrnBfr, pStr, arg_list);
+      vsnprintf(PrnBfr, sizeof(PrnBfr), pStr, arg_list);
       va_end (arg_list);
    
       PrintIt(PrnBfr);
